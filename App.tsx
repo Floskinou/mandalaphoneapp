@@ -23,7 +23,13 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CycleRing from './src/components/CycleRing';
 import MoodPicker from './src/components/MoodPicker';
 import WaterTracker from './src/components/WaterTracker';
-import { challenges, programs, workouts } from './src/data/content';
+import HomeScreen from './src/screens/HomeScreen';
+import ExploreScreen from './src/screens/ExploreScreen';
+import PlansScreen from './src/screens/PlansScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
+import ProgramScreen from './src/screens/ProgramScreen';
+import ChallengeScreen from './src/screens/ChallengeScreen';
+import { challenges as localChallenges, programs as localPrograms, workouts } from './src/data/content';
 import { buildWeeklyPlan } from './src/domain/plan';
 import { badges, currentStreak, lastNDays, minutesThisWeek } from './src/domain/stats';
 import { phaseFromDay, dayInCycle, phaseInfo, recommendForPhase } from './src/domain/cycle';
@@ -172,85 +178,6 @@ function Onboarding() {
   );
 }
 
-function HomeScreen({ navigation }: any) {
-  const { profile, premium, sessions, water, moods, setMood, toggleWater, cycle, challengeProgress } = useStore();
-  const today = new Date().toISOString().slice(0, 10);
-  const week = lastNDays(7);
-  const streak = currentStreak(sessions, today);
-  const minutes = minutesThisWeek(sessions, workouts, week);
-  const plan = useMemo(() => buildWeeklyPlan(workouts, { goal: profile!.goal, level: profile!.level }), [profile]);
-  const phase: Phase | null = cycle?.enabled && cycle.periodStart ? phaseFromDay(dayInCycle(cycle.periodStart, today), cycle.cycleLength) : null;
-  const phasePicks = phase ? recommendForPhase(workouts, phase, 2) : [];
-  const allBadges = badges({ sessions: Object.values(sessions).flat().length, streak, hydratedToday: water.includes(today), moodEntries: Object.keys(moods).length, challengeJoined: Object.values(challengeProgress).some((p) => p > 0) }, week);
-
-  return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.topBar}>
-          <View><Text style={styles.greeting}>Bonjour {profile?.firstName === 'toi' ? '' : profile?.firstName} 🌸</Text><Text style={styles.muted}>Ton rituel du jour t’attend</Text></View>
-          <Pressable onPress={() => navigation.navigate('Profile')} style={styles.avatar}><Text style={styles.avatarText}>{profile?.firstName.charAt(0).toUpperCase()}</Text></Pressable>
-        </View>
-
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, shadows.soft]}><Text style={styles.statValue}>{streak}</Text><Text style={styles.statLabel}>jours d’affilée 🔥</Text></View>
-          <View style={[styles.statCard, shadows.soft]}><Text style={styles.statValue}>{minutes}</Text><Text style={styles.statLabel}>min cette semaine</Text></View>
-        </View>
-
-        <ImageBackground source={plan[0].image} imageStyle={{ borderRadius: radius.lg }} style={styles.heroCard}>
-          <LinearGradient colors={['rgba(30,20,40,.05)', 'rgba(45,25,50,.85)']} style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
-          <View style={styles.todayBadge}><View style={styles.liveDot} /><Text style={styles.todayBadgeText}>POUR AUJOURD’HUI</Text></View>
-          <View>
-            <Text style={styles.heroTitle}>{plan[0].title}</Text>
-            <Text style={styles.heroMeta}>{plan[0].duration} min · {plan[0].category} · {plan[0].calories} kcal</Text>
-            <Pressable onPress={() => navigation.navigate('Workout', { id: plan[0].id })} style={styles.playButton}>
-              <Ionicons name="play" color={colors.violet} size={18} /><Text style={styles.playButtonText}>Commencer</Text>
-            </Pressable>
-          </View>
-        </ImageBackground>
-
-        {phase ? (
-          <View style={[styles.phaseCard, shadows.soft]}>
-            <CycleRing size={190} progress={(dayInCycle(cycle!.periodStart!, today) % cycle!.cycleLength) / cycle!.cycleLength} dayNumber={dayInCycle(cycle!.periodStart!, today)} phaseLabel={phaseInfo[phase].label} phaseEmoji={phaseInfo[phase].emoji} />
-            <Text style={styles.phaseTip}>{phaseInfo[phase].tip}</Text>
-            <Text style={styles.phaseSub}>Recommandé pour toi aujourd’hui :</Text>
-            <View style={{ gap: 10 }}>{phasePicks.map((w: Workout) => <WorkoutCard key={w.id} workout={w} navigation={navigation} compact />)}</View>
-          </View>
-        ) : (
-          <Pressable onPress={() => navigation.navigate('Cycle')} style={[styles.cycleInvite, shadows.soft]}>
-            <Ionicons name="moon" size={26} color={colors.violet} />
-            <View style={{ flex: 1 }}><Text style={styles.cycleInviteTitle}>Active ton suivi de cycle</Text><Text style={styles.cycleInviteText}>Des séances adaptées à chaque phase 🌙</Text></View>
-            <Ionicons name="chevron-forward" size={22} color={colors.muted} />
-          </Pressable>
-        )}
-
-        <MoodPicker selected={moods[today]} onSelect={setMood} />
-
-        <WaterTracker glasses={water} onToggle={toggleWater} />
-
-        <SectionHeader title="Tes badges" />
-        <View style={styles.badgesRow}>
-          {allBadges.map((b) => (
-            <View key={b.id} style={[styles.badgeChip, b.unlocked && styles.badgeUnlocked]}>
-              <Text style={{ fontSize: 19 }}>{b.emoji}</Text>
-              <Text style={[styles.badgeLabel, b.unlocked && styles.badgeLabelOn]}>{b.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        <SectionHeader title="Ton plan de la semaine" action="Voir les plans" onAction={() => navigation.navigate('Plans')} />
-        <View style={{ gap: 14 }}>{plan.slice(1).map((item) => <WorkoutCard key={item.id} workout={item} navigation={navigation} />)}</View>
-
-        {!premium ? (
-          <LinearGradient colors={[colors.violet, colors.green]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.premiumBanner, shadows.soft]}>
-            <Ionicons name="sparkles" color="#FFE9F4" size={27} />
-            <View style={{ flex: 1 }}><Text style={styles.premiumTitle}>Passe à Mandala Plus</Text><Text style={styles.premiumText}>Tous les programmes, sans limite.</Text></View>
-            <Pressable onPress={() => navigation.navigate('Paywall')}><Ionicons name="arrow-forward-circle" color="white" size={34} /></Pressable>
-          </LinearGradient>
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 
 function CycleScreen() {
   const { cycle, setCycle } = useStore();
@@ -294,62 +221,8 @@ function CycleScreen() {
   );
 }
 
-function ExploreScreen({ navigation }: any) {
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('Tout');
-  const categories = ['Tout', 'Yoga', 'Fitness', 'Mobilité', 'Respiration'];
-  const filtered = workouts.filter((item) => (category === 'Tout' || item.category === category) && `${item.title} ${item.subtitle}`.toLowerCase().includes(query.toLowerCase()));
-  return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={<>
-          <Text style={styles.pageTitle}>Explorer</Text><Text style={styles.pageLead}>Trouve la séance qui matche ton énergie.</Text>
-          <View style={[styles.searchBox, shadows.soft]}><Ionicons name="search" size={19} color={colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Rechercher une séance" placeholderTextColor="#B49CBF" style={styles.searchInput} /></View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{categories.map((item) => <Pressable key={item} onPress={() => setCategory(item)} style={[styles.filterChip, category === item && styles.filterActive]}><Text style={[styles.filterText, category === item && { color: 'white' }]}>{item}</Text></Pressable>)}</ScrollView>
-          <Text style={[styles.sectionTitle, { marginBottom: 14 }]}>{filtered.length} séances</Text>
-        </>}
-        renderItem={({ item }) => <View style={{ marginBottom: 14 }}><WorkoutCard workout={item} navigation={navigation} /></View>}
-        ListEmptyComponent={<View style={styles.emptyState}><Ionicons name="search-outline" size={40} color={colors.sage} /><Text style={styles.emptyTitle}>Aucune séance trouvée</Text><Text style={styles.muted}>Essaie une autre recherche.</Text></View>}
-      />
-    </SafeAreaView>
-  );
-}
 
-function PlansScreen({ navigation }: any) {
-  const { challengeProgress } = useStore();
-  return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>Plans</Text><Text style={styles.pageLead}>Construis ta routine, un jour après l’autre.</Text>
-        <SectionHeader title="Programmes guidés" />
-        {programs.map((program) => (
-          <Pressable key={program.id} onPress={() => navigation.navigate('Program', { id: program.id })} style={[styles.programCard, shadows.soft]}>
-            <Image source={program.image} style={styles.programImage} />
-            <View style={styles.programCopy}><Text style={styles.cardEyebrowDark}>{program.durationWeeks} SEMAINES</Text><Text style={styles.programTitle}>{program.title}</Text><Text style={styles.programDescription}>{program.description}</Text><View style={styles.inlineLink}><Text style={styles.inlineLinkText}>Découvrir</Text><Ionicons name="arrow-forward" size={16} color={colors.green} /></View></View>
-          </Pressable>
-        ))}
-        <SectionHeader title="Défis" />
-        {challenges.map((challenge) => {
-          const progress = challengeProgress[challenge.id] ?? 0;
-          return <Pressable key={challenge.id} onPress={() => navigation.navigate('Challenge', { id: challenge.id })} style={[styles.challengeCard, shadows.soft]}><Image source={challenge.image} style={styles.challengeImage} /><View style={{ flex: 1 }}><Text style={styles.challengeDays}>{challenge.days} JOURS</Text><Text style={styles.challengeTitle}>{challenge.title}</Text><View style={styles.miniProgress}><View style={[styles.miniProgressFill, { width: `${progress / challenge.days * 100}%` }]} /></View><Text style={styles.progressText}>{progress} sur {challenge.days} terminés</Text></View></Pressable>;
-        })}
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 
-function FavoritesScreen({ navigation }: any) {
-  const { favorites } = useStore();
-  const saved = workouts.filter((item) => favorites.includes(item.id));
-  return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <FlatList data={saved} keyExtractor={(item) => item.id} contentContainerStyle={styles.scrollContent} ListHeaderComponent={<><Text style={styles.pageTitle}>Favoris</Text><Text style={styles.pageLead}>Tes séances préférées, toujours à portée de main.</Text></>} renderItem={({ item }) => <View style={{ marginBottom: 14 }}><WorkoutCard workout={item} navigation={navigation} /></View>} ListEmptyComponent={<View style={styles.emptyState}><Ionicons name="heart-outline" size={48} color={colors.sage} /><Text style={styles.emptyTitle}>Ta sélection est vide</Text><Text style={[styles.muted, { textAlign: 'center' }]}>Touche le cœur d’une séance pour la retrouver ici.</Text><View style={{ height: 18 }} /><PrimaryButton label="Explorer les séances" onPress={() => navigation.navigate('Explore')} /></View>} />
-    </SafeAreaView>
-  );
-}
 
 function ProfileScreen({ navigation }: any) {
   const { profile, premium, reset } = useStore();
@@ -391,18 +264,7 @@ function WorkoutScreen({ route, navigation }: any) {
 
 function Stat({ icon, value }: any) { return <View style={[styles.stat, shadows.soft]}><Ionicons name={icon} size={19} color={colors.green} /><Text style={styles.statPillValue}>{value}</Text></View>; }
 
-function ProgramScreen({ route, navigation }: any) {
-  const program = programs.find((item) => item.id === route.params.id)!;
-  const items = program.workoutIds.map((id) => workouts.find((item) => item.id === id)!).filter(Boolean);
-  return <SafeAreaView style={styles.screen} edges={['top']}><ScrollView contentContainerStyle={styles.detailContent}><Pressable onPress={() => navigation.goBack()} style={styles.plainBack}><Ionicons name="arrow-back" size={24} color={colors.ink} /></Pressable><Image source={program.image} style={styles.detailHeroImage} /><Text style={styles.cardEyebrowDark}>{program.durationWeeks} SEMAINES · {items.length} SÉANCES</Text><Text style={styles.detailTitle}>{program.title}</Text><Text style={styles.detailLead}>{program.description}</Text><SectionHeader title="Au programme" />{items.map((item) => <View key={item.id} style={{ marginBottom: 14 }}><WorkoutCard workout={item} navigation={navigation} compact /></View>)}</ScrollView></SafeAreaView>;
-}
 
-function ChallengeScreen({ route, navigation }: any) {
-  const challenge = challenges.find((item) => item.id === route.params.id)!;
-  const { challengeProgress, advanceChallenge } = useStore();
-  const progress = challengeProgress[challenge.id] ?? 0;
-  return <SafeAreaView style={styles.screen} edges={['top']}><ScrollView contentContainerStyle={styles.detailContent}><Pressable onPress={() => navigation.goBack()} style={styles.plainBack}><Ionicons name="arrow-back" size={24} color={colors.ink} /></Pressable><Image source={challenge.image} style={styles.detailHeroImage} /><Text style={styles.cardEyebrowDark}>DÉFI · {challenge.days} JOURS</Text><Text style={styles.detailTitle}>{challenge.title}</Text><Text style={styles.detailLead}>{challenge.description}</Text><View style={styles.bigProgress}><View style={[styles.bigProgressFill, { width: `${progress / challenge.days * 100}%` }]} /></View><Text style={styles.progressStrong}>{progress} jours terminés sur {challenge.days}</Text><View style={styles.dayGrid}>{Array.from({ length: challenge.days }, (_, index) => <View key={index} style={[styles.dayCell, index < progress && styles.dayCellDone]}><Text style={[styles.dayCellText, index < progress && { color: 'white' }]}>{index + 1}</Text></View>)}</View><PrimaryButton label={progress >= challenge.days ? 'Défi terminé ✓' : 'Valider la journée'} onPress={() => advanceChallenge(challenge.id, challenge.days)} /></ScrollView></SafeAreaView>;
-}
 
 function PaywallScreen({ navigation }: any) {
   const { activateDemoPremium } = useStore();

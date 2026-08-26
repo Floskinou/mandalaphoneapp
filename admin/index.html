@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandala — Administration des contenus</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #FDF6FA; color: #2D1F33; min-height: 100vh; }
+  .container { max-width: 880px; margin: 0 auto; padding: 24px 20px 60px; }
+  header { text-align: center; padding: 30px 0 10px; }
+  header h1 { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+  header p { color: #8E7B94; margin-top: 6px; }
+  .card { background: white; border-radius: 22px; padding: 26px; margin-top: 18px; box-shadow: 0 8px 28px rgba(194,85,155,.09); }
+  label { display: block; font-weight: 800; font-size: 13px; color: #7A3E9D; margin: 16px 0 7px; }
+  label:first-of-type { margin-top: 0; }
+  input, select, textarea {
+    width: 100%; padding: 12px 14px; border: 1.5px solid #F0DCE8; border-radius: 14px;
+    font-size: 15px; font-family: inherit; background: #FDF6FA; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #C2559B; background: white; }
+  textarea { resize: vertical; min-height: 70px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .checkline { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-weight: 700; }
+  .checkline input { width: 20px; height: 20px; accent-color: #C2559B; }
+  button.primary {
+    width: 100%; margin-top: 22px; padding: 15px; border: none; border-radius: 18px;
+    background: linear-gradient(135deg, #C2559B, #E86A8A); color: white; font-size: 16px;
+    font-weight: 800; cursor: pointer;
+  }
+  button.primary:disabled { opacity: .55; cursor: wait; }
+  .msg { padding: 13px 16px; border-radius: 14px; margin-top: 16px; display: none; font-weight: 600; }
+  .msg.ok { background: #E4F7EE; color: #177245; display: block; }
+  .msg.err { background: #FDE4E4; color: #B3261E; display: block; }
+  h2 { font-size: 19px; font-weight: 900; margin-bottom: 4px; }
+  .hint { font-size: 12.5px; color: #8E7B94; line-height: 1.55; }
+  ol.hint { padding-left: 18px; margin-top: 6px; }
+  .list { margin-top: 12px; }
+  .item { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+          padding: 11px 14px; border: 1px solid #F0DCE8; border-radius: 14px; margin-top: 8px; }
+  .item strong { font-size: 14.5px; }
+  .tag { font-size: 10.5px; font-weight: 900; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .tag.pub { background: #FFE3F0; color: #C2559B; }
+  .tag.draft { background: #EEE7F2; color: #7A3E9D; }
+  .del { border: none; background: none; color: #B3261E; font-size: 17px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🌸 Mandala — Gestion des contenus</h1>
+    <p>Ajoute tes séances vidéo ; elles apparaissent instantanément dans l’application.</p>
+  </header>
+
+  <div class="card" id="loginCard">
+    <h2>Connexion admin</h2>
+    <p class="hint">Connecte-toi avec ton compte Supabase (autorisé dans la table <code>admin_users</code>).</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" placeholder="meyer.florent@gmail.com">
+    <label for="password">Mot de passe</label>
+    <input id="password" type="password" placeholder="••••••••">
+    <button class="primary" id="loginBtn">Se connecter</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <div class="card" id="formCard" style="display:none">
+    <h2>Nouvelle séance</h2>
+    <label for="wTitle">Titre de la séance *</label>
+    <input id="wTitle" placeholder="Ex. Défi #17 — Teaser">
+
+    <div class="row">
+      <div><label for="wCat">Catégorie *</label>
+        <select id="wCat"><option value="pilates">Pilates</option><option value="yoga">Yoga</option><option value="mobilite">Mobilité</option><option value="respiration">Respiration</option></select></div>
+      <div><label for="wLevel">Niveau *</label>
+        <select id="wLevel"><option value="beginner">Débutant</option><option value="intermediate">Intermédiaire</option><option value="advanced">Avancé</option></select></div>
+    </div>
+
+    <div class="row">
+      <div><label for="wDur">Durée (minutes) *</label>
+        <input id="wDur" type="number" min="1" max="180" value="10"></div>
+      <div><label for="wCal">Calories (estimation)</label>
+        <input id="wCal" type="number" min="0" value="80"></div>
+    </div>
+
+    <label for="wSub">Sous-titre</label>
+    <input id="wSub" placeholder="Une phrase d’accroche courte">
+
+    <label for="wDesc">Description complète</label>
+    <textarea id="wDesc" placeholder="Le déroulé de la séance, les bienfaits…"></textarea>
+
+    <label>Filtres objectifs</label>
+    <div class="checkline"><input type="checkbox" id="gStrength" checked><span for="gStrength">💪 Tonification</span></div>
+    <div class="checkline"><input type="checkbox" id="gEnergy"><span>⚡ Énergie</span></div>
+    <div class="checkline"><input type="checkbox" id="gMobility"><span>🧘‍♀️ Souplesse</span></div>
+    <div class="checkline"><input type="checkbox" id="gRelax"><span>🌙 Détente</span></div>
+
+    <label for="wVideo">Fichier vidéo (MP4) *</label>
+    <input id="wVideo" type="file" accept="video/mp4,video/quicktime">
+    <p class="hint" style="margin-top:6px">Recommandé : MP4 H.264, 720p ou 1080p, moins de 500 Mo.</p>
+
+    <label for="wThumb">Miniature (JPG/PNG)</label>
+    <input id="wThumb" type="file" accept="image/jpeg,image/png">
+
+    <div class="checkline"><input type="checkbox" id="wPrem"><span>Réserver aux abonnées Mandala Plus 💜</span></div>
+    <div class="checkline"><input type="checkbox" id="wPub" checked><span>Publier immédiatement dans l’app</span></div>
+
+    <button class="primary" id="submitBtn">Ajouter la séance</button>
+    <div class="msg" id="formMsg"></div>
+  </div>
+
+  <div class="card" id="listCard" style="display:none">
+    <h2>Séances existantes</h2>
+    <div class="list" id="workoutList"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://ldnybpkzhcmzvneyaqfi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkbnlicGt6aGNtenZuZXlhcWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzQwNzksImV4cCI6MjEwMzMxMDA3OX0.4KV2qyv7S5arvxmkbjRpBBAw8NaLteJJfYm1sdOBjAg';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let session = null;
+
+function show(id, ok, text) {
+  const el = document.getElementById(id);
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = text;
+}
+
+document.getElementById('loginBtn').onclick = async () => {
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  if (error) return show('loginMsg', false, 'Connexion refusée : ' + error.message);
+
+  // Vérifie que l'email figure dans admin_users
+  const { data: admins } = await sb.from('admin_users').select('email').eq('email', email).maybeSingle();
+  if (!admins) { await sb.auth.signOut(); return show('loginMsg', false, "Ce compte n'est pas administrateur (table admin_users)."); }
+
+  session = data.session;
+  document.getElementById('loginCard').style.display = 'none';
+  document.getElementById('formCard').style.display = '';
+  document.getElementById('listCard').style.display = '';
+  show('loginMsg', true, 'Bienvenue !');
+  loadList();
+};
+
+async function uploadFile(file, bucket) {
+  const ext = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const name = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+  const { error } = await sb.storage.from(bucket).upload(name, file, { cacheControl: '3600', upsert: false });
+  if (error) throw error;
+  return SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + name;
+}
+
+document.getElementById('submitBtn').onclick = async () => {
+  const btn = document.getElementById('submitBtn');
+  const msgId = 'formMsg';
+  const title = document.getElementById('wTitle').value.trim();
+  const videoFile = document.getElementById('wVideo').files[0];
+  if (!title) return show(msgId, false, 'Ajoute un titre.');
+  if (!videoFile) return show(msgId, false, 'Choisis un fichier vidéo.');
+
+  btn.disabled = true; btn.textContent = 'Envoi en cours… (peut prendre plusieurs minutes)';
+  try {
+    const goals = [];
+    if (document.getElementById('gStrength').checked) goals.push('strength');
+    if (document.getElementById('gEnergy').checked) goals.push('energy');
+    if (document.getElementById('gMobility').checked) goals.push('mobility');
+    if (document.getElementById('gRelax').checked) goals.push('relaxation');
+
+    const videoUrl = await uploadFile(videoFile, 'workout-videos');
+    let thumbUrl = null;
+    const thumbFile = document.getElementById('wThumb').files[0];
+    if (thumbFile) thumbUrl = await uploadFile(thumbFile, 'workout-thumbs');
+
+    const { error } = await sb.from('workouts').insert({
+      title,
+      subtitle: document.getElementById('wSub').value.trim(),
+      description: document.getElementById('wDesc').value.trim(),
+      duration_min: parseInt(document.getElementById('wDur').value, 10) || 10,
+      calories: parseInt(document.getElementById('wCal').value, 10) || 80,
+      category_id: document.getElementById('wCat').value,
+      level: document.getElementById('wLevel').value,
+      goals,
+      video_url: videoUrl,
+      thumbnail_url: thumbUrl,
+      premium: document.getElementById('wPrem').checked,
+      published: document.getElementById('wPub').checked,
+      sort_order: Math.floor(Date.now() / 1000),
+    });
+    if (error) throw error;
+
+    show(msgId, true, '✨ Séance publiée ! Elle apparaît dans l’app au prochain lancement.');
+    document.getElementById('wTitle').value = '';
+    document.getElementById('wVideo').value = '';
+    document.getElementById('wThumb').value = '';
+    loadList();
+  } catch (e) {
+    show(msgId, false, 'Erreur : ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = 'Ajouter la séance';
+};
+
+async function loadList() {
+  const listEl = document.getElementById('workoutList');
+  const { data } = await sb.from('workouts').select('id,title,published,duration_min').order('sort_order', { ascending: false }).limit(50);
+  listEl.innerHTML = '';
+  (data ?? []).forEach((w) => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML = '<strong>' + w.title + '</strong>' +
+      '<span style="display:flex;align-items:center;gap:10px">' +
+      '<span class="tag ' + (w.published ? 'pub' : 'draft') + '">' + (w.published ? 'EN LIGNE' : 'BROUILLON') + '</span>' +
+      '<button class="del" title="Supprimer">🗑</button></span>';
+    row.querySelector('.del').onclick = async () => {
+      if (!confirm('Supprimer « ' + w.title + ' » ?')) return;
+      await sb.from('workouts').delete().eq('id', w.id);
+      loadList();
+    };
+    listEl.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>
