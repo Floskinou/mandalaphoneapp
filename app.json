@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Mandala Yoga & Pilates",
+    "slug": "mandala-yoga-pilates",
+    "scheme": "mandalapilates",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#F5FBFA"
+        }
+      ],
+      "expo-font"
+    ],
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "translucent": false
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mandalapilates.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.mandalapilates.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#F5FBFA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a81ef909-dbce-4a29-a58c-6fa6305529e8"
+      }
+    },
+    "owner": "floskinou"
+  }
+}
