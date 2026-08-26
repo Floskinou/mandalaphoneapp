@@ -89,10 +89,10 @@
     <textarea id="wDesc" placeholder="Le déroulé de la séance, les bienfaits…"></textarea>
 
     <label>Filtres objectifs</label>
-    <div class="checkline"><input type="checkbox" id="gStrength" checked><span for="gStrength">💪 Tonification</span></div>
-    <div class="checkline"><input type="checkbox" id="gEnergy"><span>⚡ Énergie</span></div>
-    <div class="checkline"><input type="checkbox" id="gMobility"><span>🧘‍♀️ Souplesse</span></div>
-    <div class="checkline"><input type="checkbox" id="gRelax"><span>🌙 Détente</span></div>
+    <div class="checkline"><input type="checkbox" id="gStrength" checked><span>Tonification</span></div>
+    <div class="checkline"><input type="checkbox" id="gEnergy"><span>Énergie</span></div>
+    <div class="checkline"><input type="checkbox" id="gMobility"><span>Souplesse</span></div>
+    <div class="checkline"><input type="checkbox" id="gRelax"><span>Détente</span></div>
 
     <label for="wVideo">Fichier vidéo (MP4) *</label>
     <input id="wVideo" type="file" accept="video/mp4,video/quicktime">
@@ -101,7 +101,7 @@
     <label for="wThumb">Miniature (JPG/PNG)</label>
     <input id="wThumb" type="file" accept="image/jpeg,image/png">
 
-    <div class="checkline"><input type="checkbox" id="wPrem"><span>Réserver aux abonnées Mandala Plus 💜</span></div>
+    <div class="checkline"><input type="checkbox" id="wPrem"><span>Réserver aux abonnées Mandala Plus</span></div>
     <div class="checkline"><input type="checkbox" id="wPub" checked><span>Publier immédiatement dans l’app</span></div>
 
     <button class="primary" id="submitBtn">Ajouter la séance</button>
@@ -136,7 +136,6 @@ document.getElementById('loginBtn').onclick = async () => {
   btn.disabled = false;
   if (error) return show('loginMsg', false, 'Connexion refusée : ' + error.message);
 
-  // Vérifie que l'email figure dans admin_users
   const { data: admins } = await sb.from('admin_users').select('email').eq('email', email).maybeSingle();
   if (!admins) { await sb.auth.signOut(); return show('loginMsg', false, "Ce compte n'est pas administrateur (table admin_users)."); }
 
@@ -194,7 +193,7 @@ document.getElementById('submitBtn').onclick = async () => {
     });
     if (error) throw error;
 
-    show(msgId, true, '✨ Séance publiée ! Elle apparaît dans l’app au prochain lancement.');
+    show(msgId, true, 'Séance publiée ! Elle apparaît dans l’app au prochain lancement.');
     document.getElementById('wTitle').value = '';
     document.getElementById('wVideo').value = '';
     document.getElementById('wThumb').value = '';
