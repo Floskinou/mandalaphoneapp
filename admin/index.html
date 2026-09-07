@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-1iyOhjw4kyO7s0nB9St4Iw/6GfJspA6Wtr/zknmqoWw=' 'sha256-vkfx+yky9zdN+9mBLeNrt62UgIt6zFis4ebYonHoet4=' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; connect-src https://ldnybpkzhcmzvneyaqfi.supabase.co wss://ldnybpkzhcmzvneyaqfi.supabase.co; media-src blob: https://ldnybpkzhcmzvneyaqfi.supabase.co; img-src data: blob: https://ldnybpkzhcmzvneyaqfi.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
 <title>Mandala — Administration des contenus</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,216 +13,280 @@
   header h1 { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
   header p { color: #8E7B94; margin-top: 6px; }
   .card { background: white; border-radius: 22px; padding: 26px; margin-top: 18px; box-shadow: 0 8px 28px rgba(194,85,155,.09); }
+  .hidden { display: none; }
   label { display: block; font-weight: 800; font-size: 13px; color: #7A3E9D; margin: 16px 0 7px; }
   label:first-of-type { margin-top: 0; }
-  input, select, textarea {
-    width: 100%; padding: 12px 14px; border: 1.5px solid #F0DCE8; border-radius: 14px;
-    font-size: 15px; font-family: inherit; background: #FDF6FA; outline: none;
-  }
+  input, select, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #F0DCE8; border-radius: 14px; font-size: 15px; font-family: inherit; background: #FDF6FA; outline: none; }
   input:focus, select:focus, textarea:focus { border-color: #C2559B; background: white; }
   textarea { resize: vertical; min-height: 70px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .checkline { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-weight: 700; }
   .checkline input { width: 20px; height: 20px; accent-color: #C2559B; }
-  button.primary {
-    width: 100%; margin-top: 22px; padding: 15px; border: none; border-radius: 18px;
-    background: linear-gradient(135deg, #C2559B, #E86A8A); color: white; font-size: 16px;
-    font-weight: 800; cursor: pointer;
-  }
+  button.primary { width: 100%; margin-top: 22px; padding: 15px; border: none; border-radius: 18px; background: linear-gradient(135deg, #C2559B, #E86A8A); color: white; font-size: 16px; font-weight: 800; cursor: pointer; }
   button.primary:disabled { opacity: .55; cursor: wait; }
   .msg { padding: 13px 16px; border-radius: 14px; margin-top: 16px; display: none; font-weight: 600; }
   .msg.ok { background: #E4F7EE; color: #177245; display: block; }
   .msg.err { background: #FDE4E4; color: #B3261E; display: block; }
   h2 { font-size: 19px; font-weight: 900; margin-bottom: 4px; }
   .hint { font-size: 12.5px; color: #8E7B94; line-height: 1.55; }
-  ol.hint { padding-left: 18px; margin-top: 6px; }
+  .spaced { margin-top: 6px; }
   .list { margin-top: 12px; }
-  .item { display: flex; justify-content: space-between; align-items: center; gap: 10px;
-          padding: 11px 14px; border: 1px solid #F0DCE8; border-radius: 14px; margin-top: 8px; }
+  .item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid #F0DCE8; border-radius: 14px; margin-top: 8px; }
   .item strong { font-size: 14.5px; }
+  .actions { display: flex; align-items: center; gap: 10px; }
   .tag { font-size: 10.5px; font-weight: 900; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
   .tag.pub { background: #FFE3F0; color: #C2559B; }
   .tag.draft { background: #EEE7F2; color: #7A3E9D; }
-  .del { border: none; background: none; color: #B3261E; font-size: 17px; cursor: pointer; }
+  .del, .preview { border: none; background: none; color: #B3261E; font-size: 17px; cursor: pointer; }
+  .preview { color: #7A3E9D; }
 </style>
 </head>
 <body>
 <div class="container">
-  <header>
-    <h1>🌸 Mandala — Gestion des contenus</h1>
-    <p>Ajoute tes séances vidéo ; elles apparaissent instantanément dans l’application.</p>
-  </header>
-
+  <header><h1>🌸 Mandala — Gestion des contenus</h1><p>Ajoute les séances vidéo et les musiques de relaxation.</p></header>
   <div class="card" id="loginCard">
-    <h2>Connexion admin</h2>
-    <p class="hint">Connecte-toi avec ton compte Supabase (autorisé dans la table <code>admin_users</code>).</p>
-    <label for="email">Email</label>
-    <input id="email" type="email" placeholder="meyer.florent@gmail.com">
-    <label for="password">Mot de passe</label>
-    <input id="password" type="password" placeholder="••••••••">
-    <button class="primary" id="loginBtn">Se connecter</button>
-    <div class="msg" id="loginMsg"></div>
+    <h2>Connexion admin</h2><p class="hint">Compte Supabase autorisé dans <code>admin_users</code>.</p>
+    <label for="email">Email</label><input id="email" type="email" autocomplete="username">
+    <label for="password">Mot de passe</label><input id="password" type="password" autocomplete="current-password">
+    <button class="primary" id="loginBtn">Se connecter</button><div class="msg" id="loginMsg"></div>
   </div>
-
-  <div class="card" id="formCard" style="display:none">
+  <div class="card hidden" id="formCard">
     <h2>Nouvelle séance</h2>
-    <label for="wTitle">Titre de la séance *</label>
-    <input id="wTitle" placeholder="Ex. Défi #17 — Teaser">
-
+    <p class="hint">Les vidéos sont privées. Les nouvelles séances restent en brouillon jusqu’à ce que l’app mobile consomme <code>video_object_path</code> via une URL signée.</p>
+    <label for="wTitle">Titre *</label><input id="wTitle">
     <div class="row">
-      <div><label for="wCat">Catégorie *</label>
-        <select id="wCat"><option value="pilates">Pilates</option><option value="yoga">Yoga</option><option value="mobilite">Mobilité</option><option value="respiration">Respiration</option></select></div>
-      <div><label for="wLevel">Niveau *</label>
-        <select id="wLevel"><option value="beginner">Débutant</option><option value="intermediate">Intermédiaire</option><option value="advanced">Avancé</option></select></div>
+      <div><label for="wCat">Catégorie *</label><select id="wCat"><option value="pilates">Pilates</option><option value="yoga">Yoga</option><option value="mobilite">Mobilité</option><option value="respiration">Respiration</option></select></div>
+      <div><label for="wLevel">Niveau *</label><select id="wLevel"><option value="beginner">Débutant</option><option value="intermediate">Intermédiaire</option><option value="advanced">Avancé</option></select></div>
     </div>
-
     <div class="row">
-      <div><label for="wDur">Durée (minutes) *</label>
-        <input id="wDur" type="number" min="1" max="180" value="10"></div>
-      <div><label for="wCal">Calories (estimation)</label>
-        <input id="wCal" type="number" min="0" value="80"></div>
+      <div><label for="wDur">Durée (minutes) *</label><input id="wDur" type="number" min="1" max="180" value="10"></div>
+      <div><label for="wCal">Calories</label><input id="wCal" type="number" min="0" value="80"></div>
     </div>
-
-    <label for="wSub">Sous-titre</label>
-    <input id="wSub" placeholder="Une phrase d’accroche courte">
-
-    <label for="wDesc">Description complète</label>
-    <textarea id="wDesc" placeholder="Le déroulé de la séance, les bienfaits…"></textarea>
-
+    <label for="wSub">Sous-titre</label><input id="wSub">
+    <label for="wDesc">Description</label><textarea id="wDesc"></textarea>
     <label>Filtres objectifs</label>
     <div class="checkline"><input type="checkbox" id="gStrength" checked><span>Tonification</span></div>
     <div class="checkline"><input type="checkbox" id="gEnergy"><span>Énergie</span></div>
     <div class="checkline"><input type="checkbox" id="gMobility"><span>Souplesse</span></div>
     <div class="checkline"><input type="checkbox" id="gRelax"><span>Détente</span></div>
-
-    <label for="wVideo">Fichier vidéo (MP4) *</label>
-    <input id="wVideo" type="file" accept="video/mp4,video/quicktime">
-    <p class="hint" style="margin-top:6px">Recommandé : MP4 H.264, 720p ou 1080p, moins de 500 Mo.</p>
-
-    <label for="wThumb">Miniature (JPG/PNG)</label>
-    <input id="wThumb" type="file" accept="image/jpeg,image/png">
-
+    <label for="wVideo">Fichier vidéo (MP4/MOV, max. 500 Mio) *</label><input id="wVideo" type="file" accept="video/mp4,video/quicktime">
+    <label for="wThumb">Miniature (JPG/PNG/WebP, max. 10 Mio)</label><input id="wThumb" type="file" accept="image/jpeg,image/png,image/webp">
     <div class="checkline"><input type="checkbox" id="wPrem"><span>Réserver aux abonnées Mandala Plus</span></div>
-    <div class="checkline"><input type="checkbox" id="wPub" checked><span>Publier immédiatement dans l’app</span></div>
-
-    <button class="primary" id="submitBtn">Ajouter la séance</button>
-    <div class="msg" id="formMsg"></div>
+    <div class="checkline"><input type="checkbox" id="wPub" disabled><span>Publication mobile (bloquée pendant la transition URL signée)</span></div>
+    <button class="primary" id="submitBtn">Ajouter en brouillon</button><div class="msg" id="formMsg"></div>
   </div>
-
-  <div class="card" id="listCard" style="display:none">
-    <h2>Séances existantes</h2>
-    <div class="list" id="workoutList"></div>
+  <div class="card hidden" id="listCard"><h2>Séances existantes</h2><div class="list" id="workoutList"></div></div>
+  <div class="card hidden" id="musicFormCard">
+    <h2>Nouvelle musique de relaxation</h2>
+    <p class="hint">Publie uniquement un morceau dont la licence autorise l’utilisation commerciale et la redistribution dans l’application. Conserve le lien de preuve.</p>
+    <label for="mTitle">Titre *</label><input id="mTitle">
+    <div class="row">
+      <div><label for="mArtist">Artiste *</label><input id="mArtist" value="Mandala"></div>
+      <div><label for="mCategory">Catégorie *</label><select id="mCategory"><option>Méditation</option><option>Sommeil</option><option>Respiration</option><option>Nature</option><option>Relaxation</option></select></div>
+    </div>
+    <label for="mDescription">Description</label><textarea id="mDescription"></textarea>
+    <label for="mDuration">Durée en minutes *</label><input id="mDuration" type="number" min="0.1" max="240" step="0.1" value="5">
+    <label for="mAudio">Fichier audio (MP3/M4A/WAV, max. 100 Mio) *</label><input id="mAudio" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,.mp3,.m4a,.wav">
+    <label for="mArtwork">Illustration (JPG/PNG/WebP, max. 10 Mio)</label><input id="mArtwork" type="file" accept="image/jpeg,image/png,image/webp">
+    <div class="row">
+      <div><label for="mLicenseName">Nom de la licence *</label><input id="mLicenseName" placeholder="Ex. CC0 1.0"></div>
+      <div><label for="mAttribution">Crédit affiché</label><input id="mAttribution" placeholder="Auteur — œuvre"></div>
+    </div>
+    <label for="mLicenseUrl">Lien vers la licence *</label><input id="mLicenseUrl" type="url" placeholder="https://…">
+    <label for="mSourceUrl">Lien vers la source originale / preuve d’achat *</label><input id="mSourceUrl" type="url" placeholder="https://…">
+    <div class="checkline"><input type="checkbox" id="mRights"><span>Je confirme que cette licence autorise l’usage commercial dans l’application *</span></div>
+    <div class="checkline"><input type="checkbox" id="mPremium"><span>Réserver aux abonnées Mandala Plus</span></div>
+    <div class="checkline"><input type="checkbox" id="mPublished"><span>Publier immédiatement</span></div>
+    <button class="primary" id="musicSubmitBtn">Ajouter la musique</button><div class="msg" id="musicMsg"></div>
   </div>
+  <div class="card hidden" id="musicListCard"><h2>Musiques existantes</h2><div class="list" id="musicList"></div></div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://ldnybpkzhcmzvneyaqfi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkbnlicGt6aGNtenZuZXlhcWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzQwNzksImV4cCI6MjEwMzMxMDA3OX0.4KV2qyv7S5arvxmkbjRpBBAw8NaLteJJfYm1sdOBjAg';
+const PRIVATE_VIDEO_BUCKET = 'workout-videos-private';
+const THUMB_BUCKET = 'workout-thumbs';
+const AUDIO_BUCKET = 'relaxation-audio';
+const ARTWORK_BUCKET = 'relaxation-artwork';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let session = null;
 
 function show(id, ok, text) {
   const el = document.getElementById(id);
   el.className = 'msg ' + (ok ? 'ok' : 'err');
   el.textContent = text;
 }
+function storageName(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return crypto.randomUUID() + (ext ? '.' + ext : '');
+}
+async function uploadFile(file, bucket) {
+  const name = storageName(file);
+  const { error } = await sb.storage.from(bucket).upload(name, file, { cacheControl: '3600', contentType: file.type, upsert: false });
+  if (error) throw error;
+  return name;
+}
+async function removeUploaded(bucket, path) {
+  if (!path) return null;
+  const { error } = await sb.storage.from(bucket).remove([path]);
+  return error;
+}
 
-document.getElementById('loginBtn').onclick = async () => {
+document.getElementById('loginBtn').addEventListener('click', async () => {
   const btn = document.getElementById('loginBtn');
   btn.disabled = true;
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false;
-  if (error) return show('loginMsg', false, 'Connexion refusée : ' + error.message);
+  const { error: authError } = await sb.auth.signInWithPassword({ email, password });
+  if (authError) { btn.disabled = false; show('loginMsg', false, 'Connexion refusée : ' + authError.message); return; }
+  const { data: admin, error: adminError } = await sb.from('admin_users').select('email').eq('email', email).maybeSingle();
+  if (adminError || !admin) {
+    await sb.auth.signOut(); btn.disabled = false;
+    show('loginMsg', false, adminError ? 'Vérification admin impossible.' : "Ce compte n'est pas administrateur."); return;
+  }
+  document.getElementById('loginCard').classList.add('hidden');
+  document.getElementById('formCard').classList.remove('hidden');
+  document.getElementById('listCard').classList.remove('hidden');
+  document.getElementById('musicFormCard').classList.remove('hidden');
+  document.getElementById('musicListCard').classList.remove('hidden');
+  await Promise.all([loadList(), loadMusicList()]);
+});
 
-  const { data: admins } = await sb.from('admin_users').select('email').eq('email', email).maybeSingle();
-  if (!admins) { await sb.auth.signOut(); return show('loginMsg', false, "Ce compte n'est pas administrateur (table admin_users)."); }
-
-  session = data.session;
-  document.getElementById('loginCard').style.display = 'none';
-  document.getElementById('formCard').style.display = '';
-  document.getElementById('listCard').style.display = '';
-  show('loginMsg', true, 'Bienvenue !');
-  loadList();
-};
-
-async function uploadFile(file, bucket) {
-  const ext = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
-  const name = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-  const { error } = await sb.storage.from(bucket).upload(name, file, { cacheControl: '3600', upsert: false });
-  if (error) throw error;
-  return SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + name;
-}
-
-document.getElementById('submitBtn').onclick = async () => {
+document.getElementById('submitBtn').addEventListener('click', async () => {
   const btn = document.getElementById('submitBtn');
-  const msgId = 'formMsg';
   const title = document.getElementById('wTitle').value.trim();
   const videoFile = document.getElementById('wVideo').files[0];
-  if (!title) return show(msgId, false, 'Ajoute un titre.');
-  if (!videoFile) return show(msgId, false, 'Choisis un fichier vidéo.');
-
-  btn.disabled = true; btn.textContent = 'Envoi en cours… (peut prendre plusieurs minutes)';
+  if (!title || !videoFile) { show('formMsg', false, 'Titre et vidéo obligatoires.'); return; }
+  if (!['video/mp4', 'video/quicktime'].includes(videoFile.type) || videoFile.size > 500 * 1024 * 1024) { show('formMsg', false, 'Format ou taille vidéo refusé.'); return; }
+  const thumbFile = document.getElementById('wThumb').files[0];
+  if (thumbFile && (!['image/jpeg', 'image/png', 'image/webp'].includes(thumbFile.type) || thumbFile.size > 10 * 1024 * 1024)) { show('formMsg', false, 'Format ou taille miniature refusé.'); return; }
+  btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  let videoPath = null; let thumbPath = null;
   try {
+    videoPath = await uploadFile(videoFile, PRIVATE_VIDEO_BUCKET);
+    if (thumbFile) thumbPath = await uploadFile(thumbFile, THUMB_BUCKET);
     const goals = [];
     if (document.getElementById('gStrength').checked) goals.push('strength');
     if (document.getElementById('gEnergy').checked) goals.push('energy');
     if (document.getElementById('gMobility').checked) goals.push('mobility');
     if (document.getElementById('gRelax').checked) goals.push('relaxation');
-
-    const videoUrl = await uploadFile(videoFile, 'workout-videos');
-    let thumbUrl = null;
-    const thumbFile = document.getElementById('wThumb').files[0];
-    if (thumbFile) thumbUrl = await uploadFile(thumbFile, 'workout-thumbs');
-
-    const { error } = await sb.from('workouts').insert({
-      title,
-      subtitle: document.getElementById('wSub').value.trim(),
-      description: document.getElementById('wDesc').value.trim(),
-      duration_min: parseInt(document.getElementById('wDur').value, 10) || 10,
-      calories: parseInt(document.getElementById('wCal').value, 10) || 80,
-      category_id: document.getElementById('wCat').value,
-      level: document.getElementById('wLevel').value,
-      goals,
-      video_url: videoUrl,
-      thumbnail_url: thumbUrl,
-      premium: document.getElementById('wPrem').checked,
-      published: document.getElementById('wPub').checked,
-      sort_order: Math.floor(Date.now() / 1000),
+    const thumbnailUrl = thumbPath ? sb.storage.from(THUMB_BUCKET).getPublicUrl(thumbPath).data.publicUrl : null;
+    const { error: insertError } = await sb.from('workouts').insert({
+      title, subtitle: document.getElementById('wSub').value.trim(), description: document.getElementById('wDesc').value.trim(),
+      duration_min: parseInt(document.getElementById('wDur').value, 10) || 10, calories: parseInt(document.getElementById('wCal').value, 10) || 80,
+      category_id: document.getElementById('wCat').value, level: document.getElementById('wLevel').value, goals,
+      video_url: null, video_object_path: videoPath, thumbnail_url: thumbnailUrl, thumbnail_object_path: thumbPath,
+      premium: document.getElementById('wPrem').checked, published: false, sort_order: Math.floor(Date.now() / 1000),
     });
-    if (error) throw error;
-
-    show(msgId, true, 'Séance publiée ! Elle apparaît dans l’app au prochain lancement.');
-    document.getElementById('wTitle').value = '';
-    document.getElementById('wVideo').value = '';
-    document.getElementById('wThumb').value = '';
-    loadList();
-  } catch (e) {
-    show(msgId, false, 'Erreur : ' + e.message);
-  }
-  btn.disabled = false; btn.textContent = 'Ajouter la séance';
-};
+    if (insertError) throw insertError;
+    show('formMsg', true, 'Séance ajoutée en brouillon privé.');
+    document.getElementById('wTitle').value = ''; document.getElementById('wVideo').value = ''; document.getElementById('wThumb').value = '';
+    await loadList();
+  } catch (error) {
+    const cleanupErrors = await Promise.all([removeUploaded(PRIVATE_VIDEO_BUCKET, videoPath), removeUploaded(THUMB_BUCKET, thumbPath)]);
+    show('formMsg', false, 'Erreur : ' + error.message + (cleanupErrors.some(Boolean) ? ' (nettoyage Storage incomplet)' : ''));
+  } finally { btn.disabled = false; btn.textContent = 'Ajouter en brouillon'; }
+});
 
 async function loadList() {
-  const listEl = document.getElementById('workoutList');
-  const { data } = await sb.from('workouts').select('id,title,published,duration_min').order('sort_order', { ascending: false }).limit(50);
-  listEl.innerHTML = '';
-  (data ?? []).forEach((w) => {
-    const row = document.createElement('div');
-    row.className = 'item';
-    row.innerHTML = '<strong>' + w.title + '</strong>' +
-      '<span style="display:flex;align-items:center;gap:10px">' +
-      '<span class="tag ' + (w.published ? 'pub' : 'draft') + '">' + (w.published ? 'EN LIGNE' : 'BROUILLON') + '</span>' +
-      '<button class="del" title="Supprimer">🗑</button></span>';
-    row.querySelector('.del').onclick = async () => {
-      if (!confirm('Supprimer « ' + w.title + ' » ?')) return;
-      await sb.from('workouts').delete().eq('id', w.id);
-      loadList();
-    };
-    listEl.appendChild(row);
-  });
+  const list = document.getElementById('workoutList');
+  const { data, error } = await sb.from('workouts').select('id,title,published,video_object_path,thumbnail_object_path').order('sort_order', { ascending: false }).limit(50);
+  list.replaceChildren();
+  if (error) { show('formMsg', false, 'Lecture des séances impossible : ' + error.message); return; }
+  for (const workout of data || []) {
+    const row = document.createElement('div'); row.className = 'item';
+    const title = document.createElement('strong'); title.textContent = workout.title;
+    const actions = document.createElement('span'); actions.className = 'actions';
+    const tag = document.createElement('span'); tag.className = 'tag ' + (workout.published ? 'pub' : 'draft'); tag.textContent = workout.published ? 'EN LIGNE' : 'BROUILLON';
+    actions.appendChild(tag);
+    if (workout.video_object_path) {
+      const preview = document.createElement('button'); preview.className = 'preview'; preview.type = 'button'; preview.title = 'Prévisualiser (URL signée 5 min)'; preview.textContent = '▶';
+      preview.addEventListener('click', async () => {
+        const { data: signed, error: signedError } = await sb.storage.from(PRIVATE_VIDEO_BUCKET).createSignedUrl(workout.video_object_path, 300);
+        if (signedError) { show('formMsg', false, 'URL signée impossible : ' + signedError.message); return; }
+        window.open(signed.signedUrl, '_blank', 'noopener,noreferrer');
+      });
+      actions.appendChild(preview);
+    }
+    const del = document.createElement('button'); del.className = 'del'; del.type = 'button'; del.title = 'Supprimer'; del.textContent = '🗑';
+    del.addEventListener('click', async () => {
+      if (!confirm('Supprimer « ' + workout.title + ' » ?')) return;
+      const { error: deleteError } = await sb.from('workouts').delete().eq('id', workout.id);
+      if (deleteError) { show('formMsg', false, 'Suppression impossible : ' + deleteError.message); return; }
+      const cleanupErrors = await Promise.all([removeUploaded(PRIVATE_VIDEO_BUCKET, workout.video_object_path), removeUploaded(THUMB_BUCKET, workout.thumbnail_object_path)]);
+      if (cleanupErrors.some(Boolean)) show('formMsg', false, 'Séance supprimée, mais un objet Storage reste à nettoyer.');
+      await loadList();
+    });
+    actions.appendChild(del); row.append(title, actions); list.appendChild(row);
+  }
+}
+
+document.getElementById('musicSubmitBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('musicSubmitBtn');
+  const title = document.getElementById('mTitle').value.trim();
+  const artist = document.getElementById('mArtist').value.trim();
+  const audioFile = document.getElementById('mAudio').files[0];
+  const artworkFile = document.getElementById('mArtwork').files[0];
+  const licenseName = document.getElementById('mLicenseName').value.trim();
+  const licenseUrl = document.getElementById('mLicenseUrl').value.trim();
+  const sourceUrl = document.getElementById('mSourceUrl').value.trim();
+  const rightsConfirmed = document.getElementById('mRights').checked;
+  const durationSeconds = Math.round((parseFloat(document.getElementById('mDuration').value) || 0) * 60);
+  const allowedAudio = ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/wav'];
+  if (!title || !artist || !audioFile || !licenseName || !licenseUrl || !sourceUrl || !rightsConfirmed || durationSeconds < 1) {
+    show('musicMsg', false, 'Titre, artiste, durée, audio, licence, source et confirmation des droits sont obligatoires.'); return;
+  }
+  if (!licenseUrl.startsWith('https://') || !sourceUrl.startsWith('https://')) { show('musicMsg', false, 'Les liens de licence et de source doivent commencer par https://'); return; }
+  if (!allowedAudio.includes(audioFile.type) || audioFile.size > 100 * 1024 * 1024) { show('musicMsg', false, 'Format ou taille audio refusé.'); return; }
+  if (artworkFile && (!['image/jpeg', 'image/png', 'image/webp'].includes(artworkFile.type) || artworkFile.size > 10 * 1024 * 1024)) { show('musicMsg', false, 'Format ou taille illustration refusé.'); return; }
+  btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  let audioPath = null; let artworkPath = null;
+  try {
+    audioPath = await uploadFile(audioFile, AUDIO_BUCKET);
+    if (artworkFile) artworkPath = await uploadFile(artworkFile, ARTWORK_BUCKET);
+    const audioUrl = sb.storage.from(AUDIO_BUCKET).getPublicUrl(audioPath).data.publicUrl;
+    const artworkUrl = artworkPath ? sb.storage.from(ARTWORK_BUCKET).getPublicUrl(artworkPath).data.publicUrl : null;
+    const { error } = await sb.from('relaxation_tracks').insert({
+      title, artist, description: document.getElementById('mDescription').value.trim(), category: document.getElementById('mCategory').value,
+      duration_seconds: durationSeconds, audio_url: audioUrl, audio_object_path: audioPath, artwork_url: artworkUrl, artwork_object_path: artworkPath,
+      premium: document.getElementById('mPremium').checked, license_name: licenseName, license_url: licenseUrl, source_url: sourceUrl,
+      attribution: document.getElementById('mAttribution').value.trim() || null, rights_confirmed: true,
+      published: document.getElementById('mPublished').checked, sort_order: Math.floor(Date.now() / 1000),
+    });
+    if (error) throw error;
+    show('musicMsg', true, 'Musique ajoutée avec sa preuve de licence.');
+    ['mTitle', 'mDescription', 'mAudio', 'mArtwork', 'mLicenseName', 'mLicenseUrl', 'mSourceUrl', 'mAttribution'].forEach((id) => { document.getElementById(id).value = ''; });
+    document.getElementById('mRights').checked = false; document.getElementById('mPublished').checked = false;
+    await loadMusicList();
+  } catch (error) {
+    const cleanupErrors = await Promise.all([removeUploaded(AUDIO_BUCKET, audioPath), removeUploaded(ARTWORK_BUCKET, artworkPath)]);
+    show('musicMsg', false, 'Erreur : ' + error.message + (cleanupErrors.some(Boolean) ? ' (nettoyage Storage incomplet)' : ''));
+  } finally { btn.disabled = false; btn.textContent = 'Ajouter la musique'; }
+});
+
+async function loadMusicList() {
+  const list = document.getElementById('musicList');
+  const { data, error } = await sb.from('relaxation_tracks').select('id,title,artist,published,audio_object_path,artwork_object_path').order('sort_order', { ascending: false }).limit(100);
+  list.replaceChildren();
+  if (error) { show('musicMsg', false, 'Lecture des musiques impossible : ' + error.message); return; }
+  for (const track of data || []) {
+    const row = document.createElement('div'); row.className = 'item';
+    const title = document.createElement('strong'); title.textContent = track.title + ' — ' + track.artist;
+    const actions = document.createElement('span'); actions.className = 'actions';
+    const tag = document.createElement('span'); tag.className = 'tag ' + (track.published ? 'pub' : 'draft'); tag.textContent = track.published ? 'EN LIGNE' : 'BROUILLON';
+    const preview = document.createElement('button'); preview.className = 'preview'; preview.type = 'button'; preview.title = 'Écouter'; preview.textContent = '▶';
+    preview.addEventListener('click', () => window.open(sb.storage.from(AUDIO_BUCKET).getPublicUrl(track.audio_object_path).data.publicUrl, '_blank', 'noopener,noreferrer'));
+    const del = document.createElement('button'); del.className = 'del'; del.type = 'button'; del.title = 'Supprimer'; del.textContent = '🗑';
+    del.addEventListener('click', async () => {
+      if (!confirm('Supprimer « ' + track.title + ' » ?')) return;
+      const { error: deleteError } = await sb.from('relaxation_tracks').delete().eq('id', track.id);
+      if (deleteError) { show('musicMsg', false, 'Suppression impossible : ' + deleteError.message); return; }
+      const cleanupErrors = await Promise.all([removeUploaded(AUDIO_BUCKET, track.audio_object_path), removeUploaded(ARTWORK_BUCKET, track.artwork_object_path)]);
+      if (cleanupErrors.some(Boolean)) show('musicMsg', false, 'Musique supprimée, mais un fichier Storage reste à nettoyer.');
+      await loadMusicList();
+    });
+    actions.append(tag, preview, del); row.append(title, actions); list.appendChild(row);
+  }
 }
 </script>
 </body>
