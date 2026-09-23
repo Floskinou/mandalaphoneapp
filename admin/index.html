@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-1iyOhjw4kyO7s0nB9St4Iw/6GfJspA6Wtr/zknmqoWw=' 'sha256-vkfx+yky9zdN+9mBLeNrt62UgIt6zFis4ebYonHoet4=' 'sha256-XS2LU0KaHAmUQNxP7EnQT77+47yjzuDHnELwhDireLE=' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; connect-src https://ldnybpkzhcmzvneyaqfi.supabase.co wss://ldnybpkzhcmzvneyaqfi.supabase.co; media-src blob: https://ldnybpkzhcmzvneyaqfi.supabase.co; img-src data: blob: https://ldnybpkzhcmzvneyaqfi.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-XS2LU0KaHAmUQNxP7EnQT77+47yjzuDHnELwhDireLE=' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; connect-src https://ldnybpkzhcmzvneyaqfi.supabase.co wss://ldnybpkzhcmzvneyaqfi.supabase.co; media-src blob: https://ldnybpkzhcmzvneyaqfi.supabase.co; img-src data: blob: https://ldnybpkzhcmzvneyaqfi.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
 <title>Mandala — Administration des contenus</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,10 +40,46 @@
   .del, .preview { border: none; background: none; color: #B3261E; font-size: 17px; cursor: pointer; }
   .preview { color: #7A3E9D; }
 </style>
+<style>
+  .container { max-width: 1120px; }
+  header { text-align: left; padding: 30px 8px 12px; }
+  header h1 { font-size: clamp(25px, 4vw, 38px); }
+  #adminNav { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0; }
+  #adminNav.hidden { display: none; }
+  .navButton, .manageButton { border: 1px solid #E3CBDC; background: white; color: #713C89; padding: 12px 16px; border-radius: 14px; cursor: pointer; font-weight: 700; }
+  .navButton[aria-pressed="true"] { background: #713C89; color: white; }
+  .toolbar { display: flex; gap: 12px; margin: 20px 0; align-items: end; }
+  .toolbar label { flex: 1; margin: 0; }
+  .toolbar input, .toolbar select { margin-top: 6px; }
+  .item { padding: 18px; flex-wrap: wrap; }
+  .item strong { flex: 1; min-width: 140px; overflow-wrap: anywhere; }
+  .actions { flex-wrap: wrap; }
+  .summary { color: #713C89; font-size: 13px; margin: 14px 0; }
+  .empty { padding: 28px; color: #75627A; text-align: center; background: #FDF6FA; border-radius: 16px; }
+  dialog { margin: auto; border: 0; border-radius: 24px; padding: 28px; max-width: 620px; width: calc(100% - 24px); max-height: 90vh; overflow: auto; }
+  dialog::backdrop { background: rgba(45,31,51,.55); }
+  button:focus-visible { outline: 3px solid #713C89; outline-offset: 3px; }
+  .item { align-items: flex-start; }
+  .item strong { flex: initial; display: block; }
+  .itemThumb { width: 74px; height: 52px; border-radius: 10px; object-fit: cover; background: #F0DCE8; flex: 0 0 auto; }
+  .itemCopy { flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .item .meta { display: block; font-size: 12.5px; font-weight: 700; color: #7A3E9D; }
+  .item .warn { display: inline-block; font-size: 11.5px; font-weight: 800; color: #B3261E; background: #FDE4E4; border-radius: 10px; padding: 3px 9px; }
+  .emptyState { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .emptyState .empty { border-radius: 16px; }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; } .toolbar { flex-direction: column; align-items: stretch; } .card { padding: 19px; } .actions { width: 100%; } .container { padding: 16px 12px 40px; } }
+</style>
 </head>
 <body>
 <div class="container">
   <header><h1>🌸 Mandala — Gestion des contenus</h1><p>Ajoute les séances vidéo et les musiques de relaxation.</p></header>
+  <nav id="adminNav" class="hidden" aria-label="Gestion des contenus">
+    <button class="navButton" data-section="workouts" aria-pressed="true">Séances</button>
+    <button class="navButton" data-section="music" aria-pressed="false">Musiques</button>
+    <button class="navButton" id="createContentBtn" aria-expanded="false">Ajouter un contenu</button>
+    <button class="navButton" id="logoutBtn">Se déconnecter</button>
+  </nav>
+  <div id="managementMsg" class="msg" role="status" aria-live="polite"></div>
   <div class="card" id="loginCard">
     <h2>Connexion admin</h2><p class="hint">Compte Supabase autorisé dans <code>admin_users</code>.</p>
     <label for="email">Email</label><input id="email" type="email" autocomplete="username">
@@ -75,7 +111,10 @@
     <div class="checkline"><input type="checkbox" id="wPub" disabled><span>Publication mobile (bloquée pendant la transition URL signée)</span></div>
     <button class="primary" id="submitBtn">Ajouter en brouillon</button><div class="msg" id="formMsg"></div>
   </div>
-  <div class="card hidden" id="listCard"><h2>Séances existantes</h2><div class="list" id="workoutList"></div></div>
+  <div class="card hidden" id="listCard"><h2>Bibliothèque des séances</h2>
+    <div class="toolbar"><label>Rechercher<input id="workoutSearch" type="search" placeholder="Titre, catégorie…"></label><label>Statut<select id="workoutStatusFilter"><option value="all">Tous les statuts</option><option value="published">En ligne</option><option value="draft">Brouillons</option></select></label></div>
+    <p id="workoutSummary" class="summary" aria-live="polite"></p><div class="list" id="workoutList"></div>
+  </div>
   <div class="card hidden" id="musicFormCard">
     <h2>Nouvelle musique de relaxation</h2>
     <p class="hint">Publie uniquement un morceau dont la licence autorise l’utilisation commerciale et la redistribution dans l’application. Conserve le lien de preuve.</p>
@@ -99,7 +138,10 @@
     <div class="checkline"><input type="checkbox" id="mPublished"><span>Publier immédiatement</span></div>
     <button class="primary" id="musicSubmitBtn">Ajouter la musique</button><div class="msg" id="musicMsg"></div>
   </div>
-  <div class="card hidden" id="musicListCard"><h2>Musiques existantes</h2><div class="list" id="musicList"></div></div>
+  <div class="card hidden" id="musicListCard"><h2>Bibliothèque des musiques</h2>
+    <div class="toolbar"><label>Rechercher<input id="musicSearch" type="search" placeholder="Titre, artiste…"></label><label>Statut<select id="musicStatusFilter"><option value="all">Tous les statuts</option><option value="published">En ligne</option><option value="draft">Brouillons</option></select></label></div>
+    <p id="musicSummary" class="summary" aria-live="polite"></p><div class="list" id="musicList"></div>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -289,5 +331,7 @@ async function loadMusicList() {
   }
 }
 </script>
+<script src="admin-core.js"></script>
+<script src="admin-manager.js"></script>
 </body>
 </html>
